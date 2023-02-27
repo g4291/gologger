@@ -17,8 +17,6 @@ var (
 	flags = log.Lmsgprefix | log.Ldate | log.Lmicroseconds | log.Lshortfile
 )
 
-type LogFn func(v ...interface{})
-
 func init() {
 	output := os.Stdout
 	debugLogger = log.New(output, "DEBUG ", flags)
@@ -28,6 +26,7 @@ func init() {
 	fatalLoger = log.New(output, "FATAL ", flags)
 }
 
+// returns file handler for writing log
 func FileOutput(filename string) *os.File {
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	ErrorCheck(err, true)
@@ -35,13 +34,18 @@ func FileOutput(filename string) *os.File {
 	return f
 }
 
+// returns os. Stdout
+func StdOutput() io.Writer {
+	return os.Stdout
+}
+
+// set log output
 func SetOutput(writers ...io.Writer) {
 	output := io.MultiWriter(writers...)
 	infoLogger.SetOutput(output)
 	warnLogger.SetOutput(output)
 	errorLogger.SetOutput(output)
 	fatalLoger.SetOutput(output)
-
 }
 
 func Debug(v ...interface{}) {
