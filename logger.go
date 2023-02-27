@@ -1,15 +1,14 @@
-// TODO
-// multiwriter: use os.stdout and io.writer
-
-package main
+package logger
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 )
 
 var (
+	debugLogger *log.Logger
 	infoLogger  *log.Logger
 	warnLogger  *log.Logger
 	errorLogger *log.Logger
@@ -18,30 +17,65 @@ var (
 	flags = log.Lmsgprefix | log.Ldate | log.Lmicroseconds | log.Lshortfile
 )
 
+type LogFn func(v ...interface{})
+
 func init() {
-	infoLogger = log.New(os.Stdout, "INFO ", flags)
-	warnLogger = log.New(os.Stdout, "WARN ", flags)
-	errorLogger = log.New(os.Stdout, "ERROR ", flags)
-	fatalLoger = log.New(os.Stdout, "FATAL ", flags)
+	output := os.Stdout
+	debugLogger = log.New(output, "DEBUG ", flags)
+	infoLogger = log.New(output, "INFO ", flags)
+	warnLogger = log.New(output, "WARN ", flags)
+	errorLogger = log.New(output, "ERROR ", flags)
+	fatalLoger = log.New(output, "FATAL ", flags)
+}
+
+func FileOutput(filename string) *os.File {
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	ErrorCheck(err, true)
+
+	return f
+}
+
+func SetOutput(writers ...io.Writer) {
+	output := io.MultiWriter(writers...)
+	infoLogger.SetOutput(output)
+	warnLogger.SetOutput(output)
+	errorLogger.SetOutput(output)
+	fatalLoger.SetOutput(output)
+
+}
+
+func Debug(v ...interface{}) {
+	debugLogger.Output(2, fmt.Sprintln(v...))
 }
 
 func Info(v ...interface{}) {
-	v = append(v, "\n")
 	infoLogger.Output(2, fmt.Sprintln(v...))
 }
 
 func Warn(v ...interface{}) {
-	v = append(v, "\n")
 	warnLogger.Output(2, fmt.Sprintln(v...))
 }
 
 func Error(v ...interface{}) {
-	v = append(v, "\n")
 	errorLogger.Output(2, fmt.Sprintln(v...))
 }
 
 func Fatal(v ...interface{}) {
-	v = append(v, "\n")
 	fatalLoger.Output(2, fmt.Sprintln(v...))
 	os.Exit(1)
+}
+
+func ErrorCheck(err error, fatal bool) bool {
+	if err == nil {
+		return false
+	}
+
+	if fatal {
+		fatalLoger.Output(2, fmt.Sprintln(err))
+		os.Exit(1)
+	} else {
+		errorLogger.Output(2, fmt.Sprintln(err))
+	}
+
+	return true
 }
