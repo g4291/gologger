@@ -74,15 +74,18 @@ func ErrorCheck(err error, fatal bool, cleanupFn func()) bool {
 		return false
 	}
 
+	if fatal {
+		fatalLoger.Output(2, fmt.Sprintln(err))
+	} else {
+		errorLogger.Output(2, fmt.Sprintln(err))
+	}
+
 	if cleanupFn != nil {
 		cleanupFn()
 	}
 
 	if fatal {
-		fatalLoger.Output(2, fmt.Sprintln(err))
 		os.Exit(1)
-	} else {
-		errorLogger.Output(2, fmt.Sprintln(err))
 	}
 
 	return true
