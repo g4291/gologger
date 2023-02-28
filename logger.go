@@ -29,7 +29,7 @@ func init() {
 // returns file handler for writing log
 func FileOutput(filename string) *os.File {
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	ErrorCheck(err, true)
+	ErrorCheck(err, true, nil)
 
 	return f
 }
@@ -69,9 +69,13 @@ func Fatal(v ...interface{}) {
 	os.Exit(1)
 }
 
-func ErrorCheck(err error, fatal bool) bool {
+func ErrorCheck(err error, fatal bool, cleanupFn func()) bool {
 	if err == nil {
 		return false
+	}
+
+	if cleanupFn != nil {
+		cleanupFn()
 	}
 
 	if fatal {
